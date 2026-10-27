@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Oficina 3D do Joaquim</title>
+<title>J3D Lab</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Oficina 3D">
+<meta name="apple-mobile-web-app-title" content="J3D Lab">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="Calculadora de preço, produtos e vendas da oficina de impressão 3D do Joaquim.">
+<meta name="description" content="Preço, produtos e vendas das peças 3D do Joaquim.">
 <meta name="theme-color" content="#16233f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
@@ -52,11 +52,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 header.top{background:var(--bar);color:var(--bar-ink);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 22px}
 header.top .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:14px}
-.logo{width:46px;height:46px;flex:none}
+.logo{width:56px;height:56px;flex:none;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--fil)}
 header h1{font-family:var(--f-display);font-weight:700;font-size:1.45rem;line-height:1.1;margin:0;text-wrap:balance}
 header .sub{color:var(--bar-muted);font-size:.82rem;margin-top:2px;display:flex;align-items:center;gap:6px}
-.dot-unused{width:8px;height:8px;border-radius:50%;background:var(--bar-muted);display:inline-block}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bar-muted);display:inline-block}
 .dot.on{background:#3ccf8e}
+.dot.busy{background:#f5b700}
+.dot.err{background:#ff7b72}
+.sync-ok{color:var(--good);font-weight:800}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;overflow-wrap:anywhere}
 
 h2{font-family:var(--f-display);font-weight:600;font-size:1.3rem;margin:22px 0 10px;text-wrap:balance}
 .hint{color:var(--muted);font-size:.86rem;margin:4px 0 0}
@@ -160,15 +164,10 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
 <body>
 <header class="top">
   <div class="in">
-    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
-      <circle cx="24" cy="24" r="22" fill="#ff6a2b"/>
-      <circle cx="24" cy="24" r="15" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 3" opacity=".7"/>
-      <circle cx="24" cy="24" r="7" fill="#16233f"/>
-      <circle cx="24" cy="24" r="3" fill="#fff"/>
-    </svg>
+    <img class="logo" src="logo-256.png" alt="Logo J3D Lab" width="56" height="56">
     <div>
-      <h1>Oficina 3D do Joaquim</h1>
-      <div class="sub">Salvo neste celular · funciona sem internet</div>
+      <h1>J3D Lab</h1>
+      <div class="sub"><span class="dot" id="syncDot"></span><span id="syncTxt">Salvo neste celular</span></div>
     </div>
     <button class="btn sm inst" id="inst" type="button" hidden>Instalar</button>
   </div>
@@ -302,11 +301,43 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
       <li>Toque no botão <b>Instalar</b> lá em cima. Se ele não aparecer, toque nos três pontinhos ⋮ e escolha “Instalar app” ou “Adicionar à tela inicial”.</li>
       <li>No iPhone: Safari → Compartilhar → “Adicionar à Tela de Início”.</li>
     </ol>
-    <p>O ícone laranja da Oficina aparece na tela e o app abre sem a barra do navegador, mesmo sem internet.</p>
+    <p>O ícone do J3D Lab aparece na tela e o app abre sem a barra do navegador, mesmo sem internet.</p>
   </details>
+  <h2>Planilha Google</h2>
+  <div class="card" id="sy-card">
+    <div id="sy-off">
+      <p class="hint" style="margin:0 0 12px">Conecte uma planilha para ver as mesmas informações em qualquer celular e acompanhar as vendas no computador.</p>
+      <div class="q"><label for="sy-url">Endereço do script</label>
+        <input type="text" id="sy-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false" style="font-size:.95rem"></div>
+      <div class="q" style="margin-top:12px"><label for="sy-key">Chave</label>
+        <input type="text" id="sy-key" placeholder="A chave escrita no script" autocomplete="off" spellcheck="false" style="font-size:.95rem"></div>
+      <p class="hint" id="sy-msg" role="status"></p>
+      <button class="btn main" id="sy-con" type="button" style="margin-top:12px">Conectar planilha</button>
+    </div>
+    <div id="sy-on" hidden>
+      <p style="margin:0"><span class="sync-ok">Conectado.</span> <span id="sy-last" class="hint"></span></p>
+      <div class="row" style="flex-wrap:wrap;margin-top:12px">
+        <button class="btn ghost sm" id="sy-now" type="button">Sincronizar agora</button>
+        <button class="btn ghost sm" id="sy-link" type="button">Copiar link para outro celular</button>
+        <button class="btn danger sm" id="sy-dis" type="button">Desconectar</button>
+      </div>
+      <div id="sy-linkbox" hidden style="margin-top:12px">
+        <p class="hint" style="margin:0 0 6px">Mande este link pelo WhatsApp só para quem pode mexer nas vendas. Ao abrir no Chrome do outro celular, ele já conecta.</p>
+        <div class="code" id="sy-linktxt"></div>
+      </div>
+    </div>
+    <div id="sy-ask" hidden>
+      <p style="margin:0 0 12px"><b>A planilha já tem dados.</b> O que fazer com o que está neste celular?</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn main" id="sy-use" type="button">Usar só os dados da planilha</button>
+        <button class="btn ghost" id="sy-mix" type="button">Juntar os dois</button>
+      </div>
+    </div>
+  </div>
+
   <details class="how">
     <summary>Cópia de segurança</summary>
-    <p>Tudo fica guardado só neste celular. Salve uma cópia de vez em quando, ou antes de trocar de celular.</p>
+    <p>Guarda tudo num arquivo. Útil se você não usa a planilha, ou antes de trocar de celular.</p>
     <div class="row" style="margin-top:10px;flex-wrap:wrap">
       <button class="btn ghost sm" id="bk-save" type="button">Salvar cópia</button>
       <label class="btn ghost sm" for="bk-file" style="cursor:pointer">Restaurar cópia</label>
@@ -389,12 +420,135 @@ function calc(p){
   return {u,custo,preco,lucro:preco-custo,qtd};
 }
 
-/* ---------- salvar (neste celular) ---------- */
-function persist(){
-  S.upd=Date.now();
-  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+/* ---------- salvar neste celular + planilha ---------- */
+const SYK="j3d-planilha";
+let sy=null;try{sy=JSON.parse(localStorage.getItem(SYK)||"null")}catch(e){sy=null}
+const COLS=["fil","prod","vendas"];
+const semU=(k,v)=>k==="u"?undefined:v;
+function indexar(st){const m={};COLS.forEach(c=>(st[c]||[]).forEach(x=>m[c+":"+x.id]=JSON.stringify(x,semU)));m.cfg=JSON.stringify(st.cfg,semU);m.meta=JSON.stringify(st.meta||{},semU);return m}
+let snap=indexar(S);
+/* marca a hora de cada item alterado e registra os apagados, para juntar dois celulares sem perder nada */
+function carimbar(){
+  const t=Date.now(),vistos={};S.del=S.del||[];S.meta=S.meta||{nome:"",valor:0};
+  COLS.forEach(c=>(S[c]||[]).forEach(x=>{const k=c+":"+x.id;vistos[k]=1;if(snap[k]!==JSON.stringify(x,semU))x.u=t}));
+  ["cfg","meta"].forEach(k=>{vistos[k]=1;if(snap[k]!==JSON.stringify(S[k],semU))S[k].u=t});
+  Object.keys(snap).forEach(k=>{if(!vistos[k]){const i=k.indexOf(":");S.del.push({c:k.slice(0,i),id:k.slice(i+1),u:t})}});
+  snap=indexar(S);
 }
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function persist(){S.upd=Date.now();carimbar();guardar();agendar()}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+function juntar(a, b) {
+  if (!a || !a.cfg) return b;
+  if (!b || !b.cfg) return a;
+  var n = function (v) { return Number(v) || 0; };
+  var r = {};
+  r.cfg = n(b.cfg.u) >= n(a.cfg.u) ? b.cfg : a.cfg;
+  var ma = a.meta || {}, mb = b.meta || {};
+  r.meta = n(mb.u) >= n(ma.u) ? mb : ma;
+  var dm = {};
+  (a.del || []).concat(b.del || []).forEach(function (d) {
+    var k = d.c + ":" + d.id;
+    if (!dm[k] || n(d.u) > n(dm[k].u)) dm[k] = d;
+  });
+  r.del = Object.keys(dm).map(function (k) { return dm[k]; });
+  ["fil", "prod", "vendas"].forEach(function (c) {
+    var m = {}, ord = [];
+    (b[c] || []).concat(a[c] || []).forEach(function (x) {
+      if (!m[x.id]) { m[x.id] = x; ord.push(x.id); }
+      else if (n(x.u) > n(m[x.id].u)) m[x.id] = x;
+    });
+    r[c] = ord.map(function (id) { return m[id]; }).filter(function (x) {
+      var d = dm[c + ":" + x.id];
+      return !d || n(x.u) > n(d.u);
+    });
+  });
+  r.vendas.sort(function (x, y) { return String(y.data).localeCompare(String(x.data)); });
+  r.upd = Math.max(n(a.upd), n(b.upd));
+  return r;
+}
+
+
+let tSync=null,emVoo=false,deNovo=false,askMode=false,pend=null;
+function salvarSy(){try{sy?localStorage.setItem(SYK,JSON.stringify(sy)):localStorage.removeItem(SYK)}catch(e){}}
+function agendar(ms){if(!sy)return;clearTimeout(tSync);tSync=setTimeout(sincronizar,ms==null?1500:ms)}
+function status(cls,txt){$("#syncDot").className="dot"+(cls?" "+cls:"");$("#syncTxt").textContent=txt}
+function hora(t){return new Date(t).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function precos(){const o={};S.prod.forEach(p=>{const r=calc(p);o[p.id]=[r.preco,r.custo]});return o}
+async function chamar(cfg,corpo){
+  const res=corpo
+    ?await fetch(cfg.url,{method:"POST",body:JSON.stringify(Object.assign({chave:cfg.key},corpo))})
+    :await fetch(cfg.url+(cfg.url.includes("?")?"&":"?")+"chave="+encodeURIComponent(cfg.key)+"&t="+Date.now());
+  const txt=await res.text();let j;
+  try{j=JSON.parse(txt)}catch(e){throw new Error("resposta")}
+  if(!j.ok)throw new Error(j.erro||"erro");
+  return j;
+}
+async function sincronizar(){
+  if(!sy)return;
+  if(emVoo){deNovo=true;return}
+  if(navigator.onLine===false){status("","Sem internet · salvo no celular");return}
+  emVoo=true;deNovo=false;status("busy","Sincronizando…");
+  const antes=JSON.stringify(S);
+  try{
+    const j=await chamar(sy,{estado:S,precos:precos()});
+    carimbar();
+    const mudouAqui=JSON.stringify(S)!==antes;
+    const novo=juntar(j.estado,S);
+    const mudou=JSON.stringify(novo)!==JSON.stringify(S);
+    S=novo;snap=indexar(S);guardar();
+    sy.last=Date.now();salvarSy();status("on","Sincronizado às "+hora(sy.last));
+    if(mudou)atualizarTela();
+    if(mudouAqui)deNovo=true;
+  }catch(e){status("err",e.message==="chave"?"Chave errada · veja Ajustes":"Sem conexão com a planilha · salvo no celular")}
+  emVoo=false;renderSy();
+  if(deNovo)agendar(800);
+}
+function atualizarTela(){
+  if(!S.fil.find(f=>f.id===cur.fil)&&S.fil[0])cur.fil=S.fil[0].id;
+  if(edit&&!S.prod.find(p=>p.id===edit))edit=null;
+  renderFilChips();renderResult();renderProd();renderVend();
+  if(!$("#v-cfg").contains(document.activeElement))renderCfg();
+}
+function syMsg(t){$("#sy-msg").textContent=t||""}
+function renderSy(){
+  $("#sy-ask").hidden=!askMode;
+  $("#sy-off").hidden=!!sy||askMode;
+  $("#sy-on").hidden=!sy||askMode;
+  if(sy)$("#sy-last").textContent=sy.last?"Última sincronização às "+hora(sy.last)+".":"";
+}
+async function conectar(url,key){
+  url=String(url||"").trim();key=String(key||"").trim();
+  if(!/^(https:\/\/script\.google(usercontent)?\.com\/|http:\/\/localhost)/.test(url)){syMsg("Cole o endereço do app da Web, o que termina em /exec.");return}
+  if(!key){syMsg("Escreva a chave que está no script.");return}
+  syMsg("Conectando…");$("#sy-con").disabled=true;
+  const cfg={url,key};
+  try{
+    const j=await chamar(cfg,null);
+    const temLa=!!(j.estado&&j.estado.cfg);
+    const temAqui=S.vendas.length>0||S.prod.some(p=>!p.exemplo);
+    if(temLa&&temAqui){pend={cfg,est:j.estado};askMode=true;syMsg("");renderSy();return}
+    if(temLa){S=j.estado;snap=indexar(S);guardar();atualizarTela()}
+    sy=cfg;salvarSy();syMsg("");renderSy();toast("Planilha conectada");sincronizar();
+  }catch(e){
+    syMsg(e.message==="chave"?"A chave não confere com a do script.":"Não consegui falar com a planilha. Confira o endereço e se a implantação está para “Qualquer pessoa”.");
+  }finally{$("#sy-con").disabled=false}
+}
+$("#sy-con").addEventListener("click",()=>conectar($("#sy-url").value,$("#sy-key").value));
+$("#sy-use").addEventListener("click",()=>{if(!pend)return;S=pend.est;snap=indexar(S);guardar();sy=pend.cfg;pend=null;askMode=false;salvarSy();atualizarTela();renderSy();toast("Planilha conectada");sincronizar()});
+$("#sy-mix").addEventListener("click",()=>{if(!pend)return;sy=pend.cfg;pend=null;askMode=false;salvarSy();renderSy();toast("Planilha conectada");sincronizar()});
+$("#sy-now").addEventListener("click",()=>sincronizar());
+$("#sy-dis").addEventListener("click",e=>{if(!arm(e.currentTarget,"Toque de novo"))return;sy=null;salvarSy();renderSy();status("","Salvo neste celular")});
+$("#sy-link").addEventListener("click",()=>{
+  if(!sy)return;
+  const link=location.origin+location.pathname+"#conectar="+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify({url:sy.url,key:sy.key})))));
+  $("#sy-linktxt").textContent=link;$("#sy-linkbox").hidden=false;
+  try{navigator.clipboard.writeText(link).then(()=>toast("Link copiado"),()=>{})}catch(e){}
+});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")agendar(200)});
+window.addEventListener("online",()=>agendar(200));
+setInterval(()=>{if(sy&&document.visibilityState==="visible")sincronizar()},60000);
 
 /* ---------- cópia de segurança ---------- */
 document.getElementById("bk-save").addEventListener("click",()=>{
@@ -577,6 +731,16 @@ let tt;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clea
 
 function renderAll(){if(!S.fil.find(f=>f.id===cur.fil)&&S.fil[0])cur.fil=S.fil[0].id;fillForm();renderProd();renderVend();renderCfg()}
 renderAll();
+renderSy();
+if(sy){status("on","Conectado à planilha");sincronizar()}
+if(location.hash.indexOf("#conectar=")===0){
+  try{
+    const d=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(location.hash.slice(10))))));
+    history.replaceState(null,"",location.pathname+location.search);
+    go("cfg");$("#sy-url").value=d.url||"";$("#sy-key").value=d.key||"";
+    if(!sy)conectar(d.url,d.key);
+  }catch(e){}
+}
 })();
 </script>
 
