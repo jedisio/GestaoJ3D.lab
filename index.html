@@ -241,6 +241,7 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
 <!-- PRODUTOS -->
 <section class="view" id="v-prod" hidden>
   <h2>Meus produtos</h2>
+  <button class="btn main" id="p-novo" type="button">+ Novo produto</button>
   <div id="p-list" style="display:flex;flex-direction:column;gap:10px"></div>
 </section>
 
@@ -621,7 +622,9 @@ document.querySelectorAll("#v-calc input").forEach(i=>i.addEventListener("input"
 $("#c-fils").addEventListener("click",e=>{const b=e.target.closest("[data-fil]");if(!b)return;cur.fil=b.dataset.fil;renderFilChips();renderResult()});
 $("#c-margs").addEventListener("click",e=>{const b=e.target.closest("[data-mg]");if(!b)return;cur.mg=num(b.dataset.mg);$("#c-mr").value=cur.mg;renderMarg();renderResult()});
 document.querySelectorAll("[data-step]").forEach(b=>b.addEventListener("click",()=>{const i=$("#c-q");i.value=Math.max(1,(Math.round(num(i.value))||1)+num(b.dataset.step));readForm();renderResult()}));
-$("#c-limpar").addEventListener("click",()=>{edit=null;cur={nome:"",fil:cur.fil,g:0,min:0,qtd:1,ext:0,mg:100};fillForm();$("#c-nome").focus()});
+function novaPeca(){edit=null;cur={nome:"",fil:cur.fil,g:0,min:0,qtd:1,ext:0,mg:100};fillForm()}
+$("#c-limpar").addEventListener("click",()=>{novaPeca();$("#c-nome").focus()});
+$("#p-novo").addEventListener("click",()=>{novaPeca();go("calc");$("#calcTitle").textContent="Novo produto";setTimeout(()=>$("#c-nome").focus(),50)});
 $("#c-salvar").addEventListener("click",()=>{
   readForm();
   if(!cur.nome){$("#c-nome").focus();toast("Dê um nome para a peça");return}
@@ -635,7 +638,7 @@ $("#c-salvar").addEventListener("click",()=>{
 function spoolSvg(cor){return `<svg class="spool" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="16" fill="${esc(cor)}" stroke="rgba(0,0,0,.18)"/><circle cx="17" cy="17" r="10" fill="none" stroke="rgba(255,255,255,.45)" stroke-dasharray="2 2"/><circle cx="17" cy="17" r="5" fill="var(--card)" stroke="rgba(0,0,0,.18)"/></svg>`}
 function renderProd(){
   const el=$("#p-list");
-  if(!S.prod.length){el.innerHTML=`<div class="empty">Nenhum produto ainda.<br>Calcule uma peça e toque em <b>Guardar produto</b>.</div>`;return}
+  if(!S.prod.length){el.innerHTML=`<div class="empty">Nenhum produto ainda.<br>Toque em <b>+ Novo produto</b> para cadastrar a primeira peça.</div>`;return}
   el.innerHTML=S.prod.map(p=>{const r=calc(p);const f=S.fil.find(x=>x.id===p.fil)||{cor:"#ccc",nome:"?"};
     return `<div class="item" data-id="${p.id}"><div class="hd">${spoolSvg(f.cor)}<div style="min-width:0"><div class="nm">${esc(p.nome)}${p.exemplo?'<span class="tag">exemplo</span>':""}</div>
     <div class="meta">${esc(f.nome)} · ${fmtN(num(p.g)/r.qtd,1)} g · ${tempo(p.min/r.qtd)} cada · lucro ${brl(r.lucro)}</div></div><div class="pr">${brl(r.preco)}</div></div>
