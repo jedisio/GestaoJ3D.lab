@@ -1,4 +1,4 @@
-const CACHE = "j3dlab-v3";
+const CACHE = "j3dlab-v4";
 const CORE = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png", "logo-256.png"];
 
 self.addEventListener("install", e => {

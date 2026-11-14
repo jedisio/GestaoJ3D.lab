@@ -189,14 +189,14 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
     </div>
     <div class="q">
       <label for="c-g"><span class="num">3</span>Quantos gramas gastou?</label>
-      <div class="unit"><input class="in" type="text" inputmode="decimal" id="c-g" value="15"><span>g</span></div>
+      <div class="unit"><input class="in" type="text" inputmode="decimal" id="c-g" placeholder="0"><span>g</span></div>
       <p class="hint">O Bambu Studio mostra isso depois de fatiar, em “Filamento”.</p>
     </div>
     <div class="q">
       <span class="qlabel"><span class="num">4</span>Quanto tempo a impressora trabalhou?</span>
       <div class="row">
         <div class="unit"><input class="in" type="text" inputmode="numeric" id="c-h" value="0" aria-label="Horas"><span>h</span></div>
-        <div class="unit"><input class="in" type="text" inputmode="numeric" id="c-m" value="45" aria-label="Minutos"><span>min</span></div>
+        <div class="unit"><input class="in" type="text" inputmode="numeric" id="c-m" value="0" aria-label="Minutos"><span>min</span></div>
       </div>
     </div>
     <div class="q">
@@ -210,7 +210,7 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
     </div>
     <div class="q">
       <label for="c-x"><span class="num">6</span>Algum extra em cada peça?</label>
-      <div class="unit pre"><span>R$</span><input class="in" type="text" inputmode="decimal" id="c-x" value="0,50"></div>
+      <div class="unit pre"><span>R$</span><input class="in" type="text" inputmode="decimal" id="c-x" placeholder="0,00"></div>
       <p class="hint">Argola, ímã, tinta, saquinho, etiqueta…</p>
     </div>
     <div class="q">
@@ -576,7 +576,9 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
 
 /* ---------- calculadora ---------- */
 let edit=null; // id do produto em edição
-let cur={nome:"",fil:(S.fil[1]||S.fil[0]||{}).id,g:15,min:45,qtd:1,ext:0.5,mg:100};
+/* formulário em branco: o mesmo ponto de partida para a aba Calcular, "Nova peça" e "+ Novo produto" */
+function pecaVazia(fil){return {nome:"",fil:(S.fil.find(f=>f.id===fil)||S.fil[0]||{}).id,g:0,min:0,qtd:1,ext:0,mg:100}}
+let cur=pecaVazia();
 
 function readForm(){
   cur.nome=$("#c-nome").value.trim();
@@ -588,11 +590,11 @@ function readForm(){
 }
 function fillForm(){
   $("#c-nome").value=cur.nome||"";
-  $("#c-g").value=fmtN(cur.g);
+  $("#c-g").value=cur.g?fmtN(cur.g):"";
   $("#c-h").value=Math.floor(cur.min/60);
   $("#c-m").value=cur.min%60;
   $("#c-q").value=cur.qtd;
-  $("#c-x").value=fmtN(cur.ext);
+  $("#c-x").value=cur.ext?fmtN(cur.ext):"";
   $("#c-mr").value=cur.mg;
   $("#calcTitle").textContent=edit?"Editando produto":"Quanto cobrar?";
   $("#c-salvar").textContent=edit?"Salvar alterações":"Guardar produto";
@@ -622,7 +624,7 @@ document.querySelectorAll("#v-calc input").forEach(i=>i.addEventListener("input"
 $("#c-fils").addEventListener("click",e=>{const b=e.target.closest("[data-fil]");if(!b)return;cur.fil=b.dataset.fil;renderFilChips();renderResult()});
 $("#c-margs").addEventListener("click",e=>{const b=e.target.closest("[data-mg]");if(!b)return;cur.mg=num(b.dataset.mg);$("#c-mr").value=cur.mg;renderMarg();renderResult()});
 document.querySelectorAll("[data-step]").forEach(b=>b.addEventListener("click",()=>{const i=$("#c-q");i.value=Math.max(1,(Math.round(num(i.value))||1)+num(b.dataset.step));readForm();renderResult()}));
-function novaPeca(){edit=null;cur={nome:"",fil:cur.fil,g:0,min:0,qtd:1,ext:0,mg:100};fillForm()}
+function novaPeca(){edit=null;cur=pecaVazia(cur.fil);fillForm()}
 $("#c-limpar").addEventListener("click",()=>{novaPeca();$("#c-nome").focus()});
 $("#p-novo").addEventListener("click",()=>{novaPeca();go("calc");$("#calcTitle").textContent="Novo produto";setTimeout(()=>$("#c-nome").focus(),50)});
 $("#c-salvar").addEventListener("click",()=>{
