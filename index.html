@@ -307,8 +307,8 @@ details.how p,details.how ol{margin:8px 0 0;color:var(--muted);font-size:.92rem}
   <h2>Planilha Google</h2>
   <div class="card" id="sy-card">
     <div id="sy-off">
-      <p class="hint" style="margin:0 0 12px">Conecte uma planilha para ver as mesmas informações em qualquer celular e acompanhar as vendas no computador.</p>
-      <div class="q"><label for="sy-url">Endereço do script</label>
+      <p class="hint" style="margin:0 0 12px">Conecte uma planilha para ver as mesmas informações em qualquer celular e acompanhar as vendas no computador. Recebeu o link de conexão pelo WhatsApp? Copie e cole aqui que o app conecta sozinho.</p>
+      <div class="q"><label for="sy-url">Endereço do script ou link de conexão</label>
         <input type="text" id="sy-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false" style="font-size:.95rem"></div>
       <div class="q" style="margin-top:12px"><label for="sy-key">Chave</label>
         <input type="text" id="sy-key" placeholder="A chave escrita no script" autocomplete="off" spellcheck="false" style="font-size:.95rem"></div>
@@ -536,6 +536,10 @@ async function conectar(url,key){
     syMsg(e.message==="chave"?"A chave não confere com a do script.":"Não consegui falar com a planilha. Confira o endereço e se a implantação está para “Qualquer pessoa”.");
   }finally{$("#sy-con").disabled=false}
 }
+function lerLinkConexao(txt){const i=String(txt||"").indexOf("#conectar=");if(i<0)return null;
+  try{return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(txt.slice(i+10).trim())))))}catch(e){return null}}
+$("#sy-url").addEventListener("input",()=>{const d=lerLinkConexao($("#sy-url").value);if(!d)return;
+  $("#sy-url").value=d.url||"";$("#sy-key").value=d.key||"";conectar(d.url,d.key)});
 $("#sy-con").addEventListener("click",()=>conectar($("#sy-url").value,$("#sy-key").value));
 $("#sy-use").addEventListener("click",()=>{if(!pend)return;S=pend.est;snap=indexar(S);guardar();sy=pend.cfg;pend=null;askMode=false;salvarSy();atualizarTela();renderSy();toast("Planilha conectada");sincronizar()});
 $("#sy-mix").addEventListener("click",()=>{if(!pend)return;sy=pend.cfg;pend=null;askMode=false;salvarSy();renderSy();toast("Planilha conectada");sincronizar()});
